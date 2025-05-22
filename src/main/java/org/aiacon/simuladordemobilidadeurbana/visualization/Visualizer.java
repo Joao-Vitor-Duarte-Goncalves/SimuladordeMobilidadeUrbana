@@ -1,4 +1,3 @@
-
 package org.aiacon.simuladordemobilidadeurbana.visualization;
 
 import org.aiacon.simuladordemobilidadeurbana.model.Edge;
@@ -7,19 +6,19 @@ import org.aiacon.simuladordemobilidadeurbana.model.Node;
 import org.aiacon.simuladordemobilidadeurbana.model.TrafficLight;
 import org.aiacon.simuladordemobilidadeurbana.model.Vehicle;
 import org.aiacon.simuladordemobilidadeurbana.model.CustomLinkedList;
-import org.aiacon.simuladordemobilidadeurbana.model.LightPhase; // Importar o LightPhase
+import org.aiacon.simuladordemobilidadeurbana.model.LightPhase;
 import org.aiacon.simuladordemobilidadeurbana.simulation.Simulator;
 
 import javafx.application.Application;
 import javafx.application.Platform;
 import javafx.geometry.Point2D;
 import javafx.scene.Scene;
-import javafx.scene.Group; // Usar Group para agrupar elementos do semáforo
+import javafx.scene.Group;
 import javafx.scene.layout.Pane;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Circle;
 import javafx.scene.shape.Line;
-import javafx.scene.shape.Rectangle; // Para luzes do semáforo
+import javafx.scene.shape.Rectangle;
 import javafx.scene.text.Text;
 import javafx.stage.Stage;
 import org.aiacon.simuladordemobilidadeurbana.simulation.Statistics;
@@ -32,11 +31,10 @@ import java.util.ArrayList;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 
-
-
-
 /**
  * Classe responsável por visualizar o grafo e a simulação usando JavaFX.
+ * Ela estende {@code javafx.application.Application} para gerenciar a interface gráfica
+ * e a atualização dinâmica dos elementos da simulação, como veículos e semáforos.
  */
 public class Visualizer extends Application {
 
@@ -61,24 +59,32 @@ public class Visualizer extends Application {
 
     private Image carroImage;
 
-
     private volatile boolean running = true;
 
-    // Classe interna para representar o visual de um semáforo
+    /**
+     * Classe interna para representar o visual de um semáforo, incluindo seus indicadores.
+     */
     private static class TrafficLightDisplay {
         Rectangle nsIndicator; // Indicador para Norte-Sul
         Rectangle ewIndicator; // Indicador para Leste-Oeste
-        // Circle baseNodeCircle; // O círculo base do nó já está em trafficLightNodeVisuals ou regularNodeVisuals
 
+        /**
+         * Construtor para {@code TrafficLightDisplay}.
+         * @param ns O retângulo que representa o indicador Norte-Sul.
+         * @param ew O retângulo que representa o indicador Leste-Oeste.
+         */
         TrafficLightDisplay(Rectangle ns, Rectangle ew) {
-            // this.baseNodeCircle = base;
             this.nsIndicator = ns;
             this.ewIndicator = ew;
         }
     }
     private Map<String, TrafficLightDisplay> lightVisualsMap;
 
-
+    /**
+     * Construtor para a classe {@code Visualizer}.
+     * @param graph O objeto {@code Graph} que representa a estrutura da cidade.
+     * @param simulator O objeto {@code Simulator} que contém o estado atual da simulação.
+     */
     public Visualizer(Graph graph, Simulator simulator) {
         this.graph = graph;
         this.simulator = simulator;
@@ -88,6 +94,11 @@ public class Visualizer extends Application {
         this.vehicleVisuals = new HashMap<>();
     }
 
+    /**
+     * Construtor padrão para a classe {@code Visualizer}.
+     * Este construtor é principalmente para uso interno do JavaFX, mas requer que
+     * {@code setGraph} e {@code setSimulator} sejam chamados antes de {@code start}.
+     */
     public Visualizer() {
         this.trafficLightNodeVisuals = new HashMap<>();
         this.regularNodeVisuals = new HashMap<>();
@@ -95,7 +106,12 @@ public class Visualizer extends Application {
         this.vehicleVisuals = new HashMap<>();
     }
 
-
+    /**
+     * O método de entrada principal para a aplicação JavaFX do visualizador.
+     * Este método é chamado após o sistema estar pronto para a aplicação.
+     *
+     * @param primaryStage O palco principal para esta aplicação, onde a cena da aplicação pode ser definida.
+     */
     @Override
     public void start(Stage primaryStage) {
         if (this.graph == null || this.simulator == null) {
@@ -113,8 +129,7 @@ public class Visualizer extends Application {
 
         statsText = new Text(10, ALTURA_TELA - 10, "Estatísticas: Carregando...");
         pane.getChildren().add(statsText);
-        // Adicionar o texto para o congestionamento
-        congestionText = new Text(10, ALTURA_TELA - 10, "Congestionamento: N/A"); // Posição de exemplo
+        congestionText = new Text(10, ALTURA_TELA - 10, "Congestionamento: N/A");
         pane.getChildren().add(congestionText);
 
         this.carroImage = new Image(getClass().getResourceAsStream("/carros/carroofc.png"));
@@ -155,6 +170,10 @@ public class Visualizer extends Application {
         updateThread.start();
     }
 
+    /**
+     * Calcula os parâmetros de transformação para mapear coordenadas geográficas
+     * para coordenadas de tela.
+     */
     private void calcularParametrosDeTransformacao() {
         if (graph.getNodes() == null || graph.getNodes().isEmpty()) {
             System.err.println("Visualizer: Nenhum nó no grafo para calcular transformação. Usando defaults.");
@@ -186,6 +205,12 @@ public class Visualizer extends Application {
         transformacaoCalculada = true;
     }
 
+    /**
+     * Transforma coordenadas geográficas (latitude, longitude) em coordenadas de tela (X, Y).
+     * @param latGeo A latitude geográfica.
+     * @param lonGeo A longitude geográfica.
+     * @return Um objeto {@code Point2D} contendo as coordenadas de tela.
+     */
     private Point2D transformarCoordenadas(double latGeo, double lonGeo) {
         if (!transformacaoCalculada) {
             calcularParametrosDeTransformacao();
@@ -200,6 +225,9 @@ public class Visualizer extends Application {
         return new Point2D(xTela, yTela);
     }
 
+    /**
+     * Desenha os elementos estáticos do grafo, como nós e arestas, na tela.
+     */
     private void desenharElementosEstaticos() {
         pane.getChildren().clear();
         trafficLightNodeVisuals.clear();
@@ -215,20 +243,17 @@ public class Visualizer extends Application {
                     Point2D p1 = transformarCoordenadas(sourceNode.getLatitude(), sourceNode.getLongitude());
                     Point2D p2 = transformarCoordenadas(targetNode.getLatitude(), targetNode.getLongitude());
                     Line line = new Line(p1.getX(), p1.getY(), p2.getX(), p2.getY());
-                    line.setStroke(Color.BLACK); // Define a cor como preto
-                    line.setStrokeWidth(5.0);    // Aumenta a espessura para 3.0 (ajuste conforme necessário)
+                    line.setStroke(Color.BLACK);
+                    line.setStrokeWidth(5.0);
                     pane.getChildren().add(line);
 
-                    // Linha amarela tracejada por cima da preta
                     Line dashedLine = new Line(p1.getX(), p1.getY(), p2.getX(), p2.getY());
                     dashedLine.setStroke(Color.YELLOW);
                     dashedLine.setStrokeWidth(0.5);
-                    dashedLine.getStrokeDashArray().addAll(10.0, 10.0); // 10 px traço, 10 px espaço
-                    dashedLine.setStrokeLineCap(javafx.scene.shape.StrokeLineCap.ROUND); // pontas suaves
+                    dashedLine.getStrokeDashArray().addAll(10.0, 10.0);
+                    dashedLine.setStrokeLineCap(javafx.scene.shape.StrokeLineCap.ROUND);
 
                     pane.getChildren().add(dashedLine);
-
-
                 }
             }
         }
@@ -240,38 +265,36 @@ public class Visualizer extends Application {
                 TrafficLight tl = simulator.getTrafficLight(node.getId());
 
                 if (tl != null) {
-                    Group trafficLightGroup = new Group(); // Agrupa todos os elementos do semáforo
+                    Group trafficLightGroup = new Group();
 
                     Circle baseCircle = new Circle(p.getX(), p.getY(), 5, Color.DARKSLATEGRAY);
                     baseCircle.setStroke(Color.BLACK);
                     baseCircle.setStrokeWidth(0.5);
                     trafficLightGroup.getChildren().add(baseCircle);
 
-                    // Indicador Vertical (N-S) - um pouco mais longo
                     Rectangle nsIndicator = new Rectangle(p.getX() - 2, p.getY() - 8, 4, 16);
-                    nsIndicator.setFill(Color.GRAY); // Cor inicial
+                    nsIndicator.setFill(Color.GRAY);
                     nsIndicator.setStroke(Color.BLACK);
                     nsIndicator.setStrokeWidth(0.4);
 
-                    // Indicador Horizontal (L-O) - um pouco mais longo
                     Rectangle ewIndicator = new Rectangle(p.getX() - 8, p.getY() - 2, 16, 4);
-                    ewIndicator.setFill(Color.GRAY); // Cor inicial
+                    ewIndicator.setFill(Color.GRAY);
                     ewIndicator.setStroke(Color.BLACK);
                     ewIndicator.setStrokeWidth(0.4);
 
                     trafficLightGroup.getChildren().addAll(nsIndicator, ewIndicator);
                     pane.getChildren().add(trafficLightGroup);
 
-                    // Armazenar os componentes para atualização
                     lightVisualsMap.put(node.getId(), new TrafficLightDisplay(nsIndicator, ewIndicator));
-                    // Não precisa mais do trafficLightNodeVisuals se lightVisualsMap guarda os componentes
-                } else {
-
                 }
             }
         }
     }
 
+    /**
+     * Atualiza os elementos dinâmicos na tela, como cores dos semáforos,
+     * posições dos veículos e estatísticas da simulação.
+     */
     private void atualizarElementosDinamicos() {
         if (pane == null || graph == null || simulator == null || !transformacaoCalculada) return;
 
@@ -282,8 +305,8 @@ public class Visualizer extends Application {
                 TrafficLightDisplay display = lightVisualsMap.get(tl.getNodeId());
                 if (display != null) {
                     LightPhase phase = tl.getCurrentPhase();
-                    Color nsColor = Color.DARKRED; // Vermelho padrão
-                    Color ewColor = Color.DARKRED; // Vermelho padrão
+                    Color nsColor = Color.DARKRED;
+                    Color ewColor = Color.DARKRED;
 
                     if (phase != null) {
                         switch (phase) {
@@ -303,7 +326,6 @@ public class Visualizer extends Application {
                                 nsColor = Color.INDIANRED;
                                 ewColor = Color.GOLD;
                                 break;
-                            // Caso não haja default, ambas ficam vermelhas (já setado)
                         }
                     }
                     display.nsIndicator.setFill(nsColor);
@@ -350,8 +372,8 @@ public class Visualizer extends Application {
             ImageView vehicleImageView = vehicleVisuals.get(vehicle.getId());
             if (vehicleImageView == null) {
                 vehicleImageView = new ImageView(carroImage);
-                vehicleImageView.setFitWidth(14);   // ajuste conforme necessário
-                vehicleImageView.setFitHeight(14);  // ajuste conforme necessário
+                vehicleImageView.setFitWidth(14);
+                vehicleImageView.setFitHeight(14);
                 vehicleImageView.setPreserveRatio(true);
                 childrenToAdd.add(vehicleImageView);
             }
@@ -371,8 +393,6 @@ public class Visualizer extends Application {
         pane.getChildren().addAll(childrenToAdd);
         vehicleVisuals = newVehicleVisualsMap;
 
-
-
         // 3. Atualizar Texto de Estatísticas
         if (simulator != null && simulator.getStats() != null && statsText != null) {
             Statistics currentStats = simulator.getStats();
@@ -380,7 +400,7 @@ public class Visualizer extends Application {
                     "Tempo: %.0fs | Veículos Ativos: %d | Congest.: %.0f\n" +
                             "Chegadas: %d | T Médio Viagem: %.1fs | T Médio Espera: %.1fs\n" +
                             "Comb. Total: %.2f L | Comb. Médio/Veículo: %.3f L",
-                    currentStats.getCurrentTime(), // Adicionar currentTime em Statistics ou pegar do simulator.time
+                    currentStats.getCurrentTime(),
                     (simulator.getVehicles() != null ? simulator.getVehicles().size() : 0),
                     currentStats.getCurrentCongestionIndex(),
                     currentStats.getVehiclesArrived(),
@@ -393,6 +413,12 @@ public class Visualizer extends Application {
         }
     }
 
+    /**
+     * Retorna o ID do próximo nó na rota do veículo, dado o ID do nó atual do veículo.
+     * @param vehicle O veículo cuja rota está sendo consultada.
+     * @param currentVehicleNodeId O ID do nó atual do veículo.
+     * @return O ID do próximo nó na rota, ou {@code null} se não houver um próximo nó.
+     */
     private String getNextNodeIdInRoute(Vehicle vehicle, String currentVehicleNodeId) {
         CustomLinkedList<String> route = vehicle.getRoute();
         if (route == null || route.isEmpty()) return null;

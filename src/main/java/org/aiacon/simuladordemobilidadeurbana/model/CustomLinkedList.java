@@ -3,64 +3,105 @@ package org.aiacon.simuladordemobilidadeurbana.model;
 import java.util.Iterator;
 import java.util.NoSuchElementException;
 
-// Lista encadeada genérica
+/**
+ * Uma implementação de lista encadeada genérica que suporta operações básicas
+ * como adicionar, remover, obter elementos e iterar sobre a lista.
+ * Esta lista mantém ponteiros para o primeiro e último nós para otimizar
+ * as operações de adição e remoção no início e no final para O(1).
+ *
+ * @param <T> O tipo de elementos que a lista armazenará.
+ */
 public class CustomLinkedList<T> implements Iterable<T> {
 
-    // Classe interna para representar um nó da lista
-    private static class Node<T> { // Tornando Node genérico também, boa prática
+    /**
+     * Classe interna estática que representa um nó individual na lista encadeada.
+     * Cada nó contém os dados e uma referência para o próximo nó.
+     *
+     * @param <T> O tipo de dados armazenados no nó.
+     */
+    private static class Node<T> {
         T data;
         Node<T> next;
 
+        /**
+         * Constrói um novo nó com os dados especificados.
+         *
+         * @param data Os dados a serem armazenados neste nó.
+         */
         Node(T data) {
             this.data = data;
             this.next = null;
         }
     }
 
-    private Node<T> first; // Ponteiro para o primeiro nó
-    private Node<T> last;  // Ponteiro para o último nó (para add O(1))
-    private int size;      // Mantém o tamanho da lista
+    private Node<T> first;
+    private Node<T> last;
+    private int size;
 
+    /**
+     * Constrói uma lista encadeada vazia.
+     */
     public CustomLinkedList() {
         this.first = null;
-        this.last = null; // Inicializa last como null
+        this.last = null;
         this.size = 0;
     }
 
-    // Adicionar um item no final da lista - Agora O(1)
+    /**
+     * Adiciona um item ao final da lista.
+     * Esta operação tem complexidade de tempo O(1).
+     *
+     * @param item O item a ser adicionado.
+     */
     public void add(T item) {
         Node<T> newNode = new Node<>(item);
-        if (isEmpty()) { // Se a lista está vazia, first e last apontam para o novo nó
+        if (isEmpty()) {
             first = newNode;
             last = newNode;
-        } else { // Adiciona após o último nó atual e atualiza last
+        } else {
             last.next = newNode;
             last = newNode;
         }
         size++;
     }
 
-    // Método para adicionar itens no início da lista - O(1)
+    /**
+     * Adiciona um item ao início da lista.
+     * Esta operação tem complexidade de tempo O(1).
+     *
+     * @param item O item a ser adicionado.
+     */
     public void addFirst(T item) {
         Node<T> newNode = new Node<>(item);
         newNode.next = first;
         first = newNode;
-        if (last == null) { // Se a lista estava vazia, last também é o novo nó
+        if (last == null) {
             last = newNode;
         }
         size++;
     }
 
-    // Obter o primeiro item da lista - O(1)
+    /**
+     * Retorna o primeiro item da lista sem removê-lo.
+     * Esta operação tem complexidade de tempo O(1).
+     *
+     * @return O primeiro item da lista.
+     * @throws NoSuchElementException se a lista estiver vazia.
+     */
     public T getFirst() {
         if (isEmpty()) {
-            // Lançar exceção é mais idiomático do que retornar null para "get" em lista vazia
             throw new NoSuchElementException("A lista está vazia.");
         }
         return first.data;
     }
 
-    // Obter o último item da lista - O(1)
+    /**
+     * Retorna o último item da lista sem removê-lo.
+     * Esta operação tem complexidade de tempo O(1).
+     *
+     * @return O último item da lista.
+     * @throws NoSuchElementException se a lista estiver vazia.
+     */
     public T getLast() {
         if (isEmpty()) {
             throw new NoSuchElementException("A lista está vazia.");
@@ -68,17 +109,26 @@ public class CustomLinkedList<T> implements Iterable<T> {
         return last.data;
     }
 
-    // Retornar o tamanho da lista - O(1)
     public int size() {
         return size;
     }
 
-    // Verificar se a lista está vazia - O(1)
+    /**
+     * Verifica se a lista está vazia.
+     * Esta operação tem complexidade de tempo O(1).
+     */
     public boolean isEmpty() {
-        return size == 0; // Ou first == null
+        return size == 0;
     }
 
-    // Obter um item pelo índice - O(N)
+    /**
+     * Retorna o item no índice especificado.
+     * Esta operação tem complexidade de tempo O(N), onde N é o tamanho da lista.
+     *
+     * @param index O índice do item a ser retornado (base zero).
+     * @return O item no índice especificado.
+     * @throws IndexOutOfBoundsException se o índice for inválido.
+     */
     public T get(int index) {
         if (index < 0 || index >= size) {
             throw new IndexOutOfBoundsException("Índice inválido: " + index + " para tamanho " + size);
@@ -90,32 +140,37 @@ public class CustomLinkedList<T> implements Iterable<T> {
         return current.data;
     }
 
-    // Retornar o índice do item - O(N)
+    /**
+     * Retorna o índice da primeira ocorrência do item especificado nesta lista.
+     * Esta operação tem complexidade de tempo O(N).
+     *
+     * @param item O item a ser pesquisado.
+     * @return O índice da primeira ocorrência do item, ou -1 se o item não for encontrado.
+     */
     public int indexOf(T item) {
         Node<T> current = first;
         int index = 0;
         while (current != null) {
-            if (item == null) { // Lida com a busca por um item nulo
-                if (current.data == null) {
-                    return index;
-                }
-            } else {
-                if (item.equals(current.data)) {
-                    return index;
-                }
+            if (item == null ? current.data == null : item.equals(current.data)) {
+                return index;
             }
             current = current.next;
             index++;
         }
-        return -1; // Item não encontrado
+        return -1;
     }
 
-    // Verificar se a lista contém um item - O(N)
     public boolean contains(T item) {
         return indexOf(item) != -1;
     }
 
-    // Remover o primeiro item da lista - O(1)
+    /**
+     * Remove e retorna o primeiro item da lista.
+     * Esta operação tem complexidade de tempo O(1).
+     *
+     * @return O item que foi removido do início da lista.
+     * @throws NoSuchElementException se a lista estiver vazia.
+     */
     public T removeFirst() {
         if (isEmpty()) {
             throw new NoSuchElementException("Não é possível remover de uma lista vazia.");
@@ -123,29 +178,34 @@ public class CustomLinkedList<T> implements Iterable<T> {
         T data = first.data;
         first = first.next;
         size--;
-        if (isEmpty()) { // Se a lista ficou vazia, last também deve ser null
+        if (isEmpty()) {
             last = null;
         }
         return data;
     }
 
-    // Remover um item específico da lista - O(N)
+    /**
+     * Remove a primeira ocorrência do item especificado desta lista, se estiver presente.
+     * Esta operação tem complexidade de tempo O(N).
+     *
+     * @param item O item a ser removido.
+     * @return {@code true} se o item foi removido com sucesso, {@code false} caso contrário.
+     */
     public boolean remove(T item) {
         if (isEmpty()) {
             return false;
         }
 
-        // Caso o item a ser removido seja o primeiro
         if ((item == null && first.data == null) || (item != null && item.equals(first.data))) {
-            removeFirst(); // Usa o método já existente que atualiza 'last' se necessário
+            removeFirst();
             return true;
         }
 
         Node<T> current = first;
         while (current.next != null) {
             if ((item == null && current.next.data == null) || (item != null && item.equals(current.next.data))) {
-                if (current.next == last) { // Se o nó a ser removido é o último
-                    last = current; // O nó atual se torna o último
+                if (current.next == last) {
+                    last = current;
                 }
                 current.next = current.next.next;
                 size--;
@@ -153,9 +213,14 @@ public class CustomLinkedList<T> implements Iterable<T> {
             }
             current = current.next;
         }
-        return false; // Item não encontrado
+        return false;
     }
 
+    /**
+     * Retorna um iterador sobre os elementos desta lista na sequência correta.
+     *
+     * @return Um {@code Iterator} sobre os elementos desta lista.
+     */
     @Override
     public Iterator<T> iterator() {
         return new Iterator<T>() {
@@ -178,6 +243,11 @@ public class CustomLinkedList<T> implements Iterable<T> {
         };
     }
 
+    /**
+     * Retorna uma representação em string da lista.
+     *
+     * @return Uma string formatada como "[item1 -> item2 -> ... -> itemN]".
+     */
     @Override
     public String toString() {
         if (isEmpty()) {

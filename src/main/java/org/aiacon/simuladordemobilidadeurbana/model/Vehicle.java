@@ -1,37 +1,48 @@
 package org.aiacon.simuladordemobilidadeurbana.model;
 
+/**
+ * Representa um veículo na simulação de mobilidade urbana.
+ * Cada veículo possui um ID único, uma origem, um destino, uma rota,
+ * e rastreia seu tempo de viagem, tempo de espera, posição atual na aresta
+ * e consumo de combustível.
+ */
 public class Vehicle {
-    private String id; // Identificador único
-    private String origin; // Nó de origem
-    private String destination; // Nó de destino
-    private CustomLinkedList<String> route; // Rota calculada (lista de nós)
-    private String currentNode; // Nó atual
-    private double travelTime; // Tempo total de viagem (s)
-    private double waitTime; // Tempo total de espera (s)
-    private double position; // Posição na aresta atual (0 a 1)
-    public Vehicle next; // Para lista encadeada
+    private String id;
+    private String origin;
+    private String destination;
+    private CustomLinkedList<String> route;
+    private String currentNode;
+    private double travelTime;
+    private double waitTime;
+    private double position;
+    public Vehicle next;
     private double fuelConsumed;
-    private double fuelConsumptionRateMoving; // L/s em movimento
-    private double fuelConsumptionRateIdle;   // L/s em marcha lenta
-    // Construtor
+    private double fuelConsumptionRateMoving;
+    private double fuelConsumptionRateIdle;
+
+    /**
+     * Constrói uma nova instância de {@code Vehicle}.
+     *
+     * @param id O identificador único do veículo.
+     * @param origin O ID do nó de origem do veículo.
+     * @param destination O ID do nó de destino do veículo.
+     * @param route A rota calculada para o veículo, como uma lista de IDs de nós.
+     */
     public Vehicle(String id, String origin, String destination, CustomLinkedList<String> route) {
         this.id = id;
         this.origin = origin;
         this.destination = destination;
-        this.route = (route != null) ? route : new CustomLinkedList<>(); // Atribuir rota válida
+        this.route = (route != null) ? route : new CustomLinkedList<>();
         this.currentNode = origin;
         this.travelTime = 0.0;
         this.waitTime = 0.0;
         this.position = 0.0;
         this.next = null;
         this.fuelConsumed = 0.0;
-        // Valores de exemplo, podem vir da Configuration ou ser fixos por tipo de veículo no futuro
-        this.fuelConsumptionRateMoving = 0.0005; // Ex: 0.5 ml/s em movimento (aprox. 1.8 L/hora)
+        this.fuelConsumptionRateMoving = 0.0005;
         this.fuelConsumptionRateIdle = 0.0002;
     }
 
-
-    // Getters e Setters
     public String getId() {
         return id;
     }
@@ -48,10 +59,15 @@ public class Vehicle {
         return route;
     }
 
+    /**
+     * Define uma nova rota para o veículo.
+     * Se a rota fornecida for nula, a rota do veículo será definida como uma lista vazia.
+     * @param route A nova {@code CustomLinkedList} de IDs de nós para a rota.
+     */
     public void setRoute(CustomLinkedList<String> route) {
         if (route == null) {
             System.err.println("Atribuição de rota nula para o veículo " + id);
-            this.route = new CustomLinkedList<>(); // Substitui por uma rota vazia
+            this.route = new CustomLinkedList<>();
         } else {
             this.route = route;
         }
@@ -104,6 +120,4 @@ public class Vehicle {
     public double getFuelConsumptionRateIdle() {
         return fuelConsumptionRateIdle;
     }
-
-
 }

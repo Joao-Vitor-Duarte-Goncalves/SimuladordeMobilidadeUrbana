@@ -1,17 +1,33 @@
 package org.aiacon.simuladordemobilidadeurbana.model;
 
+/**
+ * Representa uma aresta (segmento de via) na rede urbana.
+ * Uma aresta conecta dois nós e possui propriedades como comprimento, tempo de viagem,
+ * direção (mão única ou dupla), velocidade máxima e capacidade.
+ */
 public class Edge {
-    private String id; // Identificador único (ex.: source-target-key)
-    private String source; // ID do nó de origem
-    private String target; // ID do nó de destino
-    private double length; // Comprimento em metros
-    private double travelTime; // Tempo de travessia em segundos
-    private boolean oneway; // Mão única (true) ou dupla (false)
-    private double maxspeed; // Velocidade máxima em km/h
-    private int capacity; // Capacidade de fluxo (veículos)
-    public Edge next; // Para lista encadeada
+    private String id;
+    private String source;
+    private String target;
+    private double length;
+    private double travelTime;
+    private boolean oneway;
+    private double maxspeed;
+    private int capacity;
+    public Edge next;
 
-    // Construtor
+    /**
+     * Constrói uma nova instância de {@code Edge}.
+     *
+     * @param id O identificador único da aresta.
+     * @param source O ID do nó de origem da aresta.
+     * @param target O ID do nó de destino da aresta.
+     * @param length O comprimento da aresta em metros.
+     * @param travelTime O tempo de travessia esperado da aresta em segundos.
+     * @param oneway {@code true} se a aresta for de mão única, {@code false} se for de mão dupla.
+     * @param maxspeed A velocidade máxima permitida na aresta em km/h.
+     * @param capacity A capacidade de fluxo da aresta em veículos.
+     */
     public Edge(String id, String source, String target, double length, double travelTime,
                 boolean oneway, double maxspeed, int capacity) {
         this.id = id;
@@ -25,7 +41,6 @@ public class Edge {
         this.next = null;
     }
 
-    // Getters e Setters
     public String getId() {
         return id;
     }
@@ -86,18 +101,14 @@ public class Edge {
         this.capacity = capacity;
     }
 
-    // Métodos auxiliares
     public double getAverageSpeed() {
-        // Calcula a velocidade média em m/s
         return length / travelTime;
     }
 
     public boolean isBidirectional() {
-        // Verifica se a aresta é bidirecional
         return !oneway;
     }
 
-    // Retorna o destino da aresta (ID do nó de destino)
     public String getDestination() {
         return target;
     }

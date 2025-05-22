@@ -1,52 +1,76 @@
 package org.aiacon.simuladordemobilidadeurbana.model;
 
-// Representa uma interseção na rede urbana
+/**
+ * Representa uma interseção ou ponto de interesse na rede urbana, como um nó em um grafo.
+ * Cada nó possui um identificador único, coordenadas geográficas e pode indicar
+ * a presença de um semáforo.
+ */
 public class Node {
-    public String id; // Identificador único (do OSM)
-    public double latitude; // Coordenada latitudinal
-    public double longitude; // Coordenada longitudinal
-    public boolean isTrafficLight; // Indica se tem semáforo
-    public Node next; // Para lista encadeada
+    public String id;
+    public double latitude;
+    public double longitude;
+    public boolean isTrafficLight;
+    public Node next;
 
-    private CustomLinkedList<Edge> edges; // Lista de arestas conectadas ao nó (implementação personalizada)
+    private CustomLinkedList<Edge> edges;
 
-    // Construtor
+    /**
+     * Constrói uma nova instância de {@code Node}.
+     *
+     * @param id O identificador único do nó (geralmente do OpenStreetMap).
+     * @param latitude A coordenada latitudinal do nó.
+     * @param longitude A coordenada longitudinal do nó.
+     * @param isTrafficLight Um booleano indicando se este nó possui um semáforo.
+     */
     public Node(String id, double latitude, double longitude, boolean isTrafficLight) {
         this.id = id;
         this.latitude = latitude;
         this.longitude = longitude;
         this.isTrafficLight = isTrafficLight;
         this.next = null;
-        this.edges = new CustomLinkedList<>(); // Inicializa a lista de arestas com a sua implementação personalizada
+        this.edges = new CustomLinkedList<>();
     }
 
-    // Getter para o campo id
+    /**
+     * Retorna o identificador único do nó.
+     */
     public String getId() {
         return id;
     }
 
-    // Adiciona uma aresta conectada ao nó
+    /**
+     * Adiciona uma aresta que se conecta a este nó.
+     */
     public void addEdge(Edge edge) {
         if (edge != null) {
-            edges.add(edge); // Metodo add da CustomLinkedList adiciona a aresta
+            edges.add(edge);
         }
     }
 
-    // Retorna a lista de arestas conectadas ao nó
+    /**
+     * Retorna a lista de todas as arestas que se originam ou chegam a este nó.
+     */
     public CustomLinkedList<Edge> getEdges() {
-        return edges; // Retorna a referência da CustomLinkedList
+        return edges;
     }
-    // Dentro da classe Node.java
-// private boolean isTrafficLight; // Se você mudar para private
 
+    /**
+     * Define se este nó possui ou não um semáforo.
+     */
     public void setIsTrafficLight(boolean isTrafficLight) {
         this.isTrafficLight = isTrafficLight;
     }
 
+    /**
+     * Retorna a coordenada latitudinal do nó.
+     */
     public double getLatitude() {
         return latitude;
     }
 
+    /**
+     * Retorna a coordenada longitudinal do nó.
+     */
     public double getLongitude() {
         return longitude;
     }

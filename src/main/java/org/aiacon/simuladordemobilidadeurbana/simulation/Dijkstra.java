@@ -9,19 +9,34 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 
+/**
+ * A classe {@code Dijkstra} fornece um método estático para calcular
+ * a rota mais curta entre dois nós em um grafo, utilizando o algoritmo de Dijkstra.
+ * A "distância" neste contexto é baseada no tempo de viagem das arestas.
+ */
 public class Dijkstra {
 
+    /**
+     * Calcula a rota de menor tempo de viagem entre um nó de origem e um nó de destino
+     * em um grafo. Utiliza o algoritmo de Dijkstra para encontrar o caminho mais eficiente.
+     *
+     * @param graph O grafo da cidade, contendo nós e arestas com tempos de viagem.
+     * @param originId O ID do nó de origem.
+     * @param destinationId O ID do nó de destino.
+     * @return Uma {@code CustomLinkedList} de Strings representando a sequência de IDs de nós
+     * na rota mais curta, incluindo a origem e o destino. Retorna uma lista vazia
+     * se o grafo, IDs, ou nós forem nulos, ou se nenhuma rota puder ser encontrada.
+     */
     public static CustomLinkedList<String> calculateRoute(Graph graph, String originId, String destinationId) {
         if (graph == null || originId == null || destinationId == null || graph.getNodes() == null || graph.getNodes().isEmpty()) {
             System.err.println("DIJKSTRA_ROUTE: Grafo nulo, IDs nulos, ou grafo sem nós.");
             return null;
         }
 
-        Map<String, Integer> distances = new HashMap<>(); // Usar ID do nó (String) como chave
-        Map<String, String> previousNodeIds = new HashMap<>(); // Mapear ID do nó para ID do nó anterior
-        HashSet<String> visitedNodeIds = new HashSet<>(); // Nós visitados por ID
+        Map<String, Integer> distances = new HashMap<>();
+        Map<String, String> previousNodeIds = new HashMap<>();
+        HashSet<String> visitedNodeIds = new HashSet<>();
 
-        // Usar um tipo de "fila de prioridade" simulada para pegar o nó com menor distância
         Map<String, Integer> unvisitedNodesWithDistance = new HashMap<>();
 
         Node originNode = graph.getNode(originId);
@@ -36,8 +51,7 @@ public class Dijkstra {
             return null;
         }
 
-        // Inicializar distâncias
-        for (Node node : graph.getNodes()) { // Iteração correta
+        for (Node node : graph.getNodes()) {
             if (node != null) {
                 distances.put(node.getId(), Integer.MAX_VALUE);
                 unvisitedNodesWithDistance.put(node.getId(), Integer.MAX_VALUE);
@@ -51,65 +65,64 @@ public class Dijkstra {
             String currentNodeId = getClosestUnvisitedNode(unvisitedNodesWithDistance, visitedNodeIds);
 
             if (currentNodeId == null || distances.get(currentNodeId) == Integer.MAX_VALUE) {
-                //System.err.println("DIJKSTRA_ROUTE: Não há mais nós alcançáveis ou nó atual com distância infinita.");
-                break; // Nenhum nó restante alcançável ou o restante é infinito
+                break;
             }
 
             if (currentNodeId.equals(destinationId)) {
-                //System.out.println("DIJKSTRA_ROUTE: Destino " + destinationId + " alcançado.");
-                break; // Destino alcançado
+                break;
             }
 
             visitedNodeIds.add(currentNodeId);
-            unvisitedNodesWithDistance.remove(currentNodeId); // Remover da "fila de prioridade"
+            unvisitedNodesWithDistance.remove(currentNodeId);
 
             Node currentNodeObject = graph.getNode(currentNodeId);
             if (currentNodeObject == null || currentNodeObject.getEdges() == null) {
-                //System.err.println("DIJKSTRA_ROUTE_WARNING: Nó atual " + currentNodeId + " não encontrado ou não tem arestas.");
                 continue;
             }
 
-            for (Edge edge : currentNodeObject.getEdges()) { // Iteração correta sobre as arestas do nó atual
+            for (Edge edge : currentNodeObject.getEdges()) {
                 if (edge == null) continue;
 
                 String neighborNodeId = edge.getTarget();
                 if (visitedNodeIds.contains(neighborNodeId)) {
-                    continue; // Já visitou, pula
+                    continue;
                 }
 
-                Node neighborNodeObject = graph.getNode(neighborNodeId); // Otimização: poderia já ter o objeto Node
+                Node neighborNodeObject = graph.getNode(neighborNodeId);
                 if (neighborNodeObject == null) {
-                    //System.err.println("DIJKSTRA_ROUTE_WARNING: Vizinho " + neighborNodeId + " da aresta " + edge.getId() + " não encontrado.");
                     continue;
                 }
 
                 double edgeTravelTime = edge.getTravelTime();
                 if (edgeTravelTime <= 0 || edgeTravelTime == Double.POSITIVE_INFINITY) {
-                    // System.err.println("DIJKSTRA_ROUTE_WARNING: Aresta " + edge.getId() + " com tempo de viagem inválido: " + edgeTravelTime);
-                    continue; // Ignora arestas com tempo de viagem inválido
+                    continue;
                 }
 
-                // Usar int para distância para simplificar, mas pode truncar. Idealmente, usar double.
-                // Multiplicar por 100 para manter alguma precisão se travelTime for pequeno.
                 int newDist = distances.get(currentNodeId) + (int) (edgeTravelTime * 100.0);
 
                 if (newDist < distances.getOrDefault(neighborNodeId, Integer.MAX_VALUE)) {
                     distances.put(neighborNodeId, newDist);
                     previousNodeIds.put(neighborNodeId, currentNodeId);
-                    unvisitedNodesWithDistance.put(neighborNodeId, newDist); // Atualiza na "fila de prioridade"
+                    unvisitedNodesWithDistance.put(neighborNodeId, newDist);
                 }
             }
         }
 
-        // Se o destino não foi alcançado (não está em 'previousNodeIds' e não é a origem)
         if (!previousNodeIds.containsKey(destinationId) && !originId.equals(destinationId)) {
             System.err.println("DIJKSTRA_ROUTE_ERROR: Caminho para o destino " + destinationId + " não pôde ser construído (não está em 'previousNodeIds').");
-            return new CustomLinkedList<>(); // Retorna rota vazia
+            return new CustomLinkedList<>();
         }
 
         return buildPath(previousNodeIds, originId, destinationId);
     }
 
+    /**
+     * Encontra o nó não visitado com a menor distância na fila de prioridade simulada.
+     *
+     * @param unvisitedNodesWithDistance Um mapa de IDs de nós para suas distâncias atuais.
+     * @param visitedNodeIds Um conjunto de IDs de nós que já foram visitados.
+     * @return O ID do nó não visitado com a menor distância, ou {@code null} se não houver mais nós alcançáveis.
+     */
     private static String getClosestUnvisitedNode(Map<String, Integer> unvisitedNodesWithDistance, HashSet<String> visitedNodeIds) {
         String closestNodeId = null;
         int minDistance = Integer.MAX_VALUE;
@@ -125,34 +138,37 @@ public class Dijkstra {
         return closestNodeId;
     }
 
+    /**
+     * Reconstrói o caminho mais curto a partir do mapa de antecessores gerado por Dijkstra.
+     *
+     * @param previousNodeIds Um mapa onde a chave é um ID de nó e o valor é o ID do nó que o precede no caminho mais curto.
+     * @param originId O ID do nó de origem.
+     * @param destinationId O ID do nó de destino.
+     * @return Uma {@code CustomLinkedList} de Strings representando a rota do origem ao destino.
+     * Retorna uma lista vazia se não for possível construir o caminho.
+     */
     private static CustomLinkedList<String> buildPath(Map<String, String> previousNodeIds, String originId, String destinationId) {
         CustomLinkedList<String> path = new CustomLinkedList<>();
         String currentNodeId = destinationId;
 
-        // Se o destino não tem antecessor e não é a origem, não há caminho.
         if (!previousNodeIds.containsKey(currentNodeId) && !currentNodeId.equals(originId)) {
-            //System.err.println("DIJKSTRA_BUILD_PATH: Destino " + destinationId + " não é alcançável (não está em previousNodeIds).");
-            return path; // Retorna caminho vazio
+            return path;
         }
 
         while (currentNodeId != null) {
             path.addFirst(currentNodeId);
             if (currentNodeId.equals(originId)) {
-                break; // Chegou na origem
+                break;
             }
-            currentNodeId = previousNodeIds.get(currentNodeId); // Move para o nó anterior
+            currentNodeId = previousNodeIds.get(currentNodeId);
             if (currentNodeId == null && !path.getFirst().equals(originId)) {
-                //System.err.println("DIJKSTRA_BUILD_PATH: Caminho interrompido antes de alcançar a origem.");
-                return new CustomLinkedList<>(); // Caminho quebrado
+                return new CustomLinkedList<>();
             }
         }
 
-        // Validação final: o caminho deve começar na origem e terminar no destino.
-        // A primeira validação é se o primeiro elemento é a origem, se o path não estiver vazio.
         if (path.isEmpty() || !path.getFirst().equals(originId)) {
-            if (!originId.equals(destinationId)) { // Se origem e destino são iguais, um path com um nó é válido.
-                // System.err.println("DIJKSTRA_BUILD_PATH: Caminho construído não começa na origem " + originId + " ou está vazio. Primeiro no path: " + (path.isEmpty() ? "VAZIO" : path.getFirst()));
-                return new CustomLinkedList<>(); // Retorna caminho vazio
+            if (!originId.equals(destinationId)) {
+                return new CustomLinkedList<>();
             }
         }
 

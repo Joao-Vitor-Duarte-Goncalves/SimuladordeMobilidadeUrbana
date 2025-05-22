@@ -4,6 +4,12 @@ import org.aiacon.simuladordemobilidadeurbana.model.*;
 import java.util.HashMap;
 import java.util.Map;
 
+/**
+ * A classe {@code Simulator} é o coração da simulação de mobilidade urbana.
+ * Ela gerencia o fluxo de tempo, a geração e o movimento de veículos, a atualização
+ * dos semáforos e a coleta de estatísticas. Implementa {@code Runnable} para
+ * executar a simulação em uma thread separada.
+ */
 public class Simulator implements Runnable {
     private Graph graph;
     private Configuration config;
@@ -12,8 +18,15 @@ public class Simulator implements Runnable {
     private VehicleGenerator generator;
     private double time;
     private volatile boolean running = true;
-    private boolean generationStopped = false; // Adicione esta flag
+    private boolean generationStopped = false;
 
+    /**
+     * Constrói uma nova instância do {@code Simulator}.
+     *
+     * @param graph O objeto {@code Graph} que representa a malha viária da cidade.
+     * @param config O objeto {@code Configuration} que contém os parâmetros da simulação.
+     * @throws IllegalStateException se o grafo estiver vazio ou não estiver totalmente conectado.
+     */
     public Simulator(Graph graph, Configuration config) {
         this.graph = graph;
         this.config = config;
@@ -21,7 +34,6 @@ public class Simulator implements Runnable {
         this.stats = new Statistics();
         this.generator = new VehicleGenerator(graph, config.getVehicleGenerationRate());
         this.time = 0.0;
-        // this.generationStopped = false; // Inicializada na declaração do campo
 
         validateGraph();
         if (!isGraphConnected()) {
@@ -29,10 +41,16 @@ public class Simulator implements Runnable {
         }
     }
 
+    /**
+     * O método principal de execução da simulação.
+     * Este método contém o loop de simulação que avança o tempo, gera veículos,
+     * atualiza semáforos e move veículos. A simulação continua até que a duração
+     * configurada seja atingida ou a simulação seja explicitamente parada.
+     */
     @Override
     public void run() {
         System.out.println("SIMULATOR_RUN: Iniciando loop de simulação. Duração: " + config.getSimulationDuration() + "s");
-        double deltaTime = 1.0; // Passo de simulação em segundos
+        double deltaTime = 1.0;
 
         while (running && time < config.getSimulationDuration()) {
             time += deltaTime;
@@ -44,18 +62,14 @@ public class Simulator implements Runnable {
                 break;
             }
 
-            // Verifica se deve parar de gerar veículos e atualiza a flag
-            // A mensagem de parada será logada na primeira vez que esta condição for verdadeira
             if (!generationStopped && time > config.getVehicleGenerationStopTime()) {
                 System.out.println("SIMULATOR_RUN: Tempo limite de geração de veículos (" + String.format("%.2f", config.getVehicleGenerationStopTime()) + "s) atingido. Nenhum veículo novo será gerado.");
-                generationStopped = true; // Seta a flag para parar futuras gerações
+                generationStopped = true;
             }
 
-            // Gera veículos APENAS SE a flag generationStopped for false
             if (!generationStopped) {
                 generateVehicles(deltaTime);
             }
-            // A CHAMADA EXTRA E INCONDICIONAL A generateVehicles(deltaTime); FOI REMOVIDA DAQUI
 
             updateTrafficLights(deltaTime);
             moveVehicles(deltaTime);
@@ -70,11 +84,18 @@ public class Simulator implements Runnable {
         stats.printSummary();
     }
 
+    /**
+     * Sinaliza para a simulação parar sua execução.
+     */
     public void stopSimulation() {
         System.out.println("SIMULATOR_STOPSIMULATION: Sinalizando para parar a simulação.");
         this.running = false;
     }
 
+    /**
+     * Valida a integridade do grafo, verificando se não é nulo ou vazio.
+     * @throws IllegalStateException se o grafo estiver vazio ou não tiver sido carregado corretamente.
+     */
     private void validateGraph() {
         if (graph == null || graph.getNodes() == null || graph.getNodes().isEmpty()) {
             throw new IllegalStateException("Erro: O grafo está vazio ou não foi carregado corretamente.");
@@ -82,6 +103,10 @@ public class Simulator implements Runnable {
         System.out.println("Grafo validado com sucesso! Nós carregados: " + graph.getNodes().size());
     }
 
+    /**
+     * Verifica se o grafo está totalmente conectado usando uma busca em largura (BFS).
+     * @return {@code true} se o grafo estiver conectado, {@code false} caso contrário.
+     */
     private boolean isGraphConnected() {
         if (graph == null || graph.getNodes() == null || graph.getNodes().isEmpty()) {
             System.out.println("BFS: Grafo nulo ou sem nós.");
@@ -123,6 +148,10 @@ public class Simulator implements Runnable {
         return connected;
     }
 
+    /**
+     * Gera novos veículos com base na taxa de geração e no tempo decorrido.
+     * @param deltaTime O incremento de tempo da simulação.
+     */
     private void generateVehicles(double deltaTime) {
         double numExpectedVehicles = deltaTime * config.getVehicleGenerationRate();
         int numToGenerate = (int) numExpectedVehicles;
@@ -141,6 +170,10 @@ public class Simulator implements Runnable {
         }
     }
 
+    /**
+     * Atualiza o estado de todos os semáforos no grafo.
+     * @param deltaTime O incremento de tempo da simulação.
+     */
     private void updateTrafficLights(double deltaTime) {
         if (graph.getTrafficLights() == null) return;
         for (TrafficLight tl : graph.getTrafficLights()) {
@@ -150,6 +183,10 @@ public class Simulator implements Runnable {
         }
     }
 
+    /**
+     * Move todos os veículos ativos no grafo e remove os veículos que chegaram ao destino.
+     * @param deltaTime O incremento de tempo da simulação.
+     */
     private void moveVehicles(double deltaTime) {
         CustomLinkedList<Vehicle> vehiclesStillActive = new CustomLinkedList<>();
         for (Vehicle vehicle : vehicles) {
@@ -167,6 +204,12 @@ public class Simulator implements Runnable {
         }
     }
 
+    /**
+     * Determina a direção cardeal de um nó de origem para um nó de destino.
+     * @param fromNodeId O ID do nó de origem.
+     * @param toNodeId O ID do nó de destino.
+     * @return Uma string representando a direção ("north", "south", "east", "west") ou "unknown".
+     */
     private String determineCardinalDirection(String fromNodeId, String toNodeId) {
         if (fromNodeId == null || toNodeId == null || fromNodeId.equals(toNodeId)) {
             return "unknown";
@@ -191,6 +234,12 @@ public class Simulator implements Runnable {
         return "unknown";
     }
 
+    /**
+     * Atualiza a posição de um veículo, sua contagem de tempo de viagem/espera
+     * e consumo de combustível. Lida com a lógica de travessia de semáforos.
+     * @param vehicle O veículo a ser atualizado.
+     * @param deltaTime O incremento de tempo da simulação.
+     */
     private void updateVehicle(Vehicle vehicle, double deltaTime) {
         if (!running) return;
 
@@ -202,12 +251,6 @@ public class Simulator implements Runnable {
             String previousNodeIdInRoute = getPreviousNodeInRoute(vehicle);
 
             TrafficLight tl = getTrafficLight(currentVehicleNodeId);
-
-            /*
-            if (tl != null && config.getRedirectThreshold() > 0) {
-                redirectIfNeeded(vehicle, currentVehicleNodeId, graph);
-            }
-             */
 
             String nextNodeIdInRoute = getNextNodeInRoute(vehicle);
 
@@ -304,6 +347,12 @@ public class Simulator implements Runnable {
         }
     }
 
+    /**
+     * Encontra uma aresta entre dois nós especificados.
+     * @param sourceNodeId O ID do nó de origem da aresta.
+     * @param targetNodeId O ID do nó de destino da aresta.
+     * @return O objeto {@code Edge} se encontrado, ou {@code null} caso contrário.
+     */
     private Edge findEdge(String sourceNodeId, String targetNodeId) {
         if (sourceNodeId == null || targetNodeId == null) return null;
         Node sourceNode = graph.getNode(sourceNodeId);
@@ -316,11 +365,18 @@ public class Simulator implements Runnable {
         return null;
     }
 
+    /**
+     * Registra o estado atual da simulação no console.
+     */
     private void logSimulationState() {
         System.out.println("Tempo: " + String.format("%.2f", time) + "s, Veículos: " + (vehicles != null ? vehicles.size() : 0) +
                 ", Congestionamento: " + String.format("%.0f", stats.getCurrentCongestionIndex()));
     }
 
+    /**
+     * Pausa a thread de simulação por um curto período de tempo.
+     * @param deltaTime O incremento de tempo da simulação (usado para calcular o tempo de sono).
+     */
     private void sleep(double deltaTime) {
         try {
             Thread.sleep((long) (deltaTime * 100));
@@ -331,6 +387,14 @@ public class Simulator implements Runnable {
         }
     }
 
+    /**
+     * Redireciona um veículo para uma rota alternativa se o seu caminho atual
+     * estiver congestionado e houver uma alternativa melhor disponível.
+     *
+     * @param vehicle O veículo a ser potencialmente redirecionado.
+     * @param trafficLightNodeId O ID do nó do semáforo onde o redirecionamento pode ocorrer.
+     * @param graph O grafo da cidade.
+     */
     private void redirectIfNeeded(Vehicle vehicle, String trafficLightNodeId, Graph graph) {
         if (vehicle == null || trafficLightNodeId == null || graph == null || config == null || config.getRedirectThreshold() <= 0) {
             return;
@@ -408,6 +472,11 @@ public class Simulator implements Runnable {
         }
     }
 
+    /**
+     * Retorna a direção cardeal oposta à direção fornecida.
+     * @param direction A direção cardeal.
+     * @return A direção oposta, ou "unknown" se a direção não for reconhecida.
+     */
     private String getOppositeDirection(String direction) {
         if (direction == null) return "unknown";
         switch (direction.toLowerCase()) {
@@ -419,6 +488,11 @@ public class Simulator implements Runnable {
         }
     }
 
+    /**
+     * Retorna o objeto {@code TrafficLight} associado a um determinado ID de nó.
+     * @param nodeId O ID do nó.
+     * @return O objeto {@code TrafficLight} se encontrado, ou {@code null} caso contrário.
+     */
     public TrafficLight getTrafficLight(String nodeId) {
         if (graph == null || graph.getTrafficLights() == null || nodeId == null) return null;
         for (TrafficLight tl : graph.getTrafficLights()) {
@@ -429,6 +503,11 @@ public class Simulator implements Runnable {
         return null;
     }
 
+    /**
+     * Retorna o ID do próximo nó na rota do veículo.
+     * @param vehicle O veículo.
+     * @return O ID do próximo nó, ou {@code null} se não houver um próximo nó.
+     */
     private String getNextNodeInRoute(Vehicle vehicle) {
         if (vehicle == null || vehicle.getRoute() == null || vehicle.getRoute().isEmpty()) return null;
         String currentNode = vehicle.getCurrentNode();
@@ -438,6 +517,11 @@ public class Simulator implements Runnable {
         return vehicle.getRoute().get(currentIndex + 1);
     }
 
+    /**
+     * Retorna o ID do nó anterior na rota do veículo.
+     * @param vehicle O veículo.
+     * @return O ID do nó anterior, ou {@code null} se não houver um nó anterior.
+     */
     private String getPreviousNodeInRoute(Vehicle vehicle) {
         if (vehicle == null || vehicle.getRoute() == null || vehicle.getRoute().isEmpty() || vehicle.getCurrentNode() == null) return null;
         String currentVehicleNodeId = vehicle.getCurrentNode();
@@ -448,6 +532,13 @@ public class Simulator implements Runnable {
         return null;
     }
 
+    /**
+     * Encontra um nó vizinho na direção cardeal especificada a partir de um nó de origem.
+     * @param sourceNodeId O ID do nó de origem.
+     * @param targetDirection A direção cardeal alvo ("north", "south", "east", "west").
+     * @param graph O grafo da cidade.
+     * @return O nó vizinho na direção especificada, ou {@code null} se nenhum for encontrado.
+     */
     private Node findNeighborInDirection(String sourceNodeId, String targetDirection, Graph graph) {
         Node sourceNode = graph.getNode(sourceNodeId);
         if (sourceNode == null || sourceNode.getEdges() == null || targetDirection == null || targetDirection.equals("unknown")) {
@@ -489,12 +580,25 @@ public class Simulator implements Runnable {
         return bestNeighbor;
     }
 
+    /**
+     * Retorna a lista atual de veículos na simulação.
+     * @return Uma {@code CustomLinkedList} de objetos {@code Vehicle}.
+     */
     public CustomLinkedList<Vehicle> getVehicles() {
         return this.vehicles;
     }
 
+    /**
+     * Retorna o objeto {@code Statistics} que coleta e gerencia os dados da simulação.
+     * @return O objeto {@code Statistics}.
+     */
     public Statistics getStats() {
         return this.stats;
     }
+
+    /**
+     * Retorna o tempo atual da simulação.
+     * @return O tempo atual da simulação em segundos.
+     */
     public double getCurrentTime() { return this.time; }
 }
