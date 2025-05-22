@@ -15,38 +15,47 @@ import javafx.stage.Stage;
 
 import java.io.InputStream;
 
-/**
- * A aplicação principal para o Simulador de Mobilidade Urbana.
- * Esta classe estende {@code javafx.application.Application} e é responsável por
- * inicializar a simulação, carregar o grafo da cidade, configurar os parâmetros
- * da simulação e iniciar a visualização.
- */
 public class HelloApplication extends Application {
 
     private Simulator simulator;
     private Thread simulationThread;
 
-    /**
-     * O método de entrada principal para a aplicação JavaFX.
-     * Este método é chamado após o sistema estar pronto para a aplicação.
-     *
-     * @param primaryStage O palco principal para esta aplicação, em que a cena da aplicação pode ser definida.
-     */
     @Override
     public void start(Stage primaryStage) {
         System.out.println("HELLO_APPLICATION_START: Iniciando a aplicação...");
         Graph graph;
-        Configuration config = new Configuration();
+        Configuration config = new Configuration(); // << MOVER A CRIAÇÃO DA CONFIG PARA ANTES DO TRY-CATCH
 
-        config.setTrafficLightMode(2);
-        config.setVehicleGenerationRate(0.3);
-        config.setPeakHour(true);
+        // Definir os parâmetros da simulação ANTES de carregar o grafo,
+        // pois o JsonParser agora precisa do objeto config.
+        config.setTrafficLightMode(2);           // 1:Fixo, 2:AdaptativoFila, 3:EconomiaEnergia
+        config.setVehicleGenerationRate(0.5);    // Veículos por segundo
+        // config.setRedirectThreshold(10);      // Comentado pois redirectIfNeeded foi desabilitado no Simulator
+        config.setPeakHour(true);               // Simular horário de pico ou não
 
-        double totalSimulationTime = 600.0;
-        double stopGeneratingVehiclesAfter = 300.0;
+        double totalSimulationTime = 3600.0;
+        double stopGeneratingVehiclesAfter = 1500.0;
 
         config.setSimulationDuration(totalSimulationTime);
         config.setVehicleGenerationStopTime(stopGeneratingVehiclesAfter);
+
+        // Exemplo para Modo Fixo (se trafficLightMode fosse 1)
+        config.setFixedGreenTime(8);
+        config.setFixedYellowTime(3);
+
+        // Exemplo para Modo Adaptativo
+        config.setAdaptiveBaseGreen(8.0);
+        config.setAdaptiveMaxGreen(9.0);
+        config.setAdaptiveMinGreenTime(6.0);
+        config.setAdaptiveIncrement(0.5);
+        config.setAdaptiveQueueThreshold(7);
+
+        // Exemplo para Modo Economia
+        // config.setEnergySavingBaseGreen(22.0);
+        // config.setEnergySavingMaxGreenTime(45.0);
+        // config.setEnergySavingMinGreen(8.0);
+        // config.setEnergySavingThreshold(2);
+
 
         try {
             String resourcePath = "/mapa/CentroTeresinaPiauiBrazil.json";
@@ -57,6 +66,7 @@ public class HelloApplication extends Application {
                 mostrarErroFatal(primaryStage, errorMessage);
                 return;
             }
+            // << PASSAR O OBJETO 'config' PARA O MÉTODO loadGraphFromStream
             graph = JsonParser.loadGraphFromStream(jsonInputStream, config);
             System.out.println("HELLO_APPLICATION_START: Grafo carregado com sucesso.");
 
@@ -75,10 +85,11 @@ public class HelloApplication extends Application {
             return;
         }
 
+        // A configuração já foi feita antes de carregar o grafo.
         System.out.println("HELLO_APPLICATION_START: Configuração da simulação carregada. Modo Semáforo: " + config.getTrafficLightMode() +
                 ", Duração Total: " + config.getSimulationDuration() + "s, Parar Geração em: " + config.getVehicleGenerationStopTime() + "s");
 
-        this.simulator = new Simulator(graph, config);
+        this.simulator = new Simulator(graph, config); // Simulator também usa o mesmo objeto config
         Visualizer visualizer = new Visualizer(graph, this.simulator);
 
         try {
@@ -99,12 +110,6 @@ public class HelloApplication extends Application {
         System.out.println("HELLO_APPLICATION_START: Thread da simulação iniciada.");
     }
 
-    /**
-     * Exibe uma mensagem de erro fatal e encerra a aplicação.
-     *
-     * @param stage O palco principal da aplicação.
-     * @param mensagem A mensagem de erro a ser exibida.
-     */
     private void mostrarErroFatal(Stage stage, String mensagem) {
         Pane errorPane = new Pane(new Text(20, 50, mensagem));
         Scene errorScene = new Scene(errorPane, Math.max(400, mensagem.length() * 7), 100);
@@ -114,10 +119,6 @@ public class HelloApplication extends Application {
         Platform.exit();
     }
 
-    /**
-     * Este método é chamado quando a aplicação é encerrada.
-     * Garante que a thread da simulação seja interrompida de forma limpa.
-     */
     @Override
     public void stop() {
         System.out.println("HELLO_APPLICATION_STOP: Método stop() chamado, encerrando a aplicação...");
@@ -145,11 +146,6 @@ public class HelloApplication extends Application {
         System.out.println("HELLO_APPLICATION_STOP: Processo de encerramento da aplicação JavaFX concluído.");
     }
 
-    /**
-     * O método principal que inicia a aplicação JavaFX.
-     *
-     * @param args Argumentos da linha de comando.
-     */
     public static void main(String[] args) {
         launch(args);
     }

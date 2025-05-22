@@ -244,7 +244,7 @@ public class Visualizer extends Application {
                     Point2D p2 = transformarCoordenadas(targetNode.getLatitude(), targetNode.getLongitude());
                     Line line = new Line(p1.getX(), p1.getY(), p2.getX(), p2.getY());
                     line.setStroke(Color.BLACK);
-                    line.setStrokeWidth(5.0);
+                    line.setStrokeWidth(5.5);
                     pane.getChildren().add(line);
 
                     Line dashedLine = new Line(p1.getX(), p1.getY(), p2.getX(), p2.getY());
